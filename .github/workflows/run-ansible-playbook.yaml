@@ -1,4 +1,4 @@
-name: Reusable - Bootstrap Ansible with Cloud OIDC
+name: Reusable - Run Ansible Playbook with Cloud OIDC
 
 on:
   workflow_call:
@@ -17,6 +17,14 @@ on:
         required: false
         type: string
         default: "3.12"
+      ansible-extra-vars:
+        description: "Extra variables to pass to the Ansible playbook"
+        required: false
+        type: string
+      ansible-playbook-path:
+        description: "Path to the Ansible playbook file"
+        required: true
+        type: string
       # AWS Authentication Inputs
       aws-region:
         description: "AWS region for authentication. Required when cloud-provider is 'aws'."
@@ -67,6 +75,8 @@ jobs:
           echo "=== Workflow Inputs ==="
           echo "Cloud Provider: ${{ inputs.cloud-provider }}"
           echo "Python Version: ${{ inputs.python-version }}"
+          echo "Ansible Extra Vars: ${{ inputs.ansible-extra-vars }}"
+          echo "Ansible Playbook Path: ${{ inputs.ansible-playbook-path }}"
           echo "AWS Region: ${{ inputs.aws-region }}"
           echo "Azure Audience: ${{ inputs.azure-audience }}"
           echo "TFC Token: ${{ secrets.tfc-token && '[PROVIDED]' || '[NOT PROVIDED]' }}"
@@ -85,6 +95,14 @@ jobs:
             exit 1
           fi
           echo "Valid cloud provider: ${{ inputs.cloud-provider }}"
+
+      - name: Validate Ansible Playbook Path
+        run: |
+          if [[ ! -f "${{ inputs.ansible-playbook-path }}" ]]; then
+            echo "Error: Ansible playbook file '${{ inputs.ansible-playbook-path }}' does not exist"
+            exit 1
+          fi
+          echo "Valid playbook file: ${{ inputs.ansible-playbook-path }}"
 
       # Determine checkout reference
       #############################################
@@ -184,3 +202,11 @@ jobs:
       - name: GCP | Setup gcloud
         if: ${{ inputs.cloud-provider == 'gcp' }}
         uses: google-github-actions/setup-gcloud@v3
+
+      # -------------------------
+      # Run Ansible Playbook
+      # -------------------------
+      - name: Run playbook
+        run: |
+          ansible-playbook ${{ inputs.ansible-playbook-path }} \
+            --extra-vars "message=${{ inputs.ansible-extra-vars || 'Hello from push event!' }}"

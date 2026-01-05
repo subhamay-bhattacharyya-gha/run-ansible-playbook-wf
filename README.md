@@ -1,19 +1,20 @@
-# Bootstrap Ansible with Cloud OIDC
+# Run Ansible Playbook with Cloud OIDC
 
-![Built with Kiro](https://img.shields.io/badge/Built_with-Kiro-8845f4?logo=robot&logoColor=white)&nbsp;![Release](https://github.com/subhamay-bhattacharyya-gha/bootstrap-ansible-wf/actions/workflows/release.yaml/badge.svg)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-gha/bootstrap-ansible-wf)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-gha/bootstrap-ansible-wf)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-gha/bootstrap-ansible-wf)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-gha/bootstrap-ansible-wf)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-gha/bootstrap-ansible-wf)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-gha/bootstrap-ansible-wf)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-gha/bootstrap-ansible-wf)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/f6b6f5bb3da58cb3a6ca3f01bd7582cd/raw/bootstrap-ansible-wf.json?)
+![Built with Kiro](https://img.shields.io/badge/Built_with-Kiro-8845f4?logo=robot&logoColor=white)&nbsp;![Release](https://github.com/subhamay-bhattacharyya-gha/run-ansible-playbook-wf/actions/workflows/release.yaml/badge.svg)&nbsp;![Commit Activity](https://img.shields.io/github/commit-activity/t/subhamay-bhattacharyya-gha/run-ansible-playbook-wf)&nbsp;![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-gha/run-ansible-playbook-wf)&nbsp;![Release Date](https://img.shields.io/github/release-date/subhamay-bhattacharyya-gha/run-ansible-playbook-wf)&nbsp;![Repo Size](https://img.shields.io/github/repo-size/subhamay-bhattacharyya-gha/run-ansible-playbook-wf)&nbsp;![File Count](https://img.shields.io/github/directory-file-count/subhamay-bhattacharyya-gha/run-ansible-playbook-wf)&nbsp;![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-gha/run-ansible-playbook-wf)&nbsp;![Top Language](https://img.shields.io/github/languages/top/subhamay-bhattacharyya-gha/run-ansible-playbook-wf)&nbsp;![Custom Endpoint](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/bsubhamay/0759cf31f1c25f01365caa97eea304f5/raw/run-ansible-playbook-wf.json?)
 
-A reusable GitHub Actions workflow that bootstraps Ansible with cloud provider authentication using OpenID Connect (OIDC).
+A reusable GitHub Actions workflow that runs Ansible playbooks with cloud provider authentication using OpenID Connect (OIDC).
 
-## Reusable Workflow: Bootstrap Ansible with Cloud OIDC
+## Reusable Workflow: Run Ansible Playbook with Cloud OIDC
 
 ### Description
 
-This reusable workflow sets up a complete Ansible environment with cloud provider authentication using OIDC. It supports AWS, Azure, and GCP, automatically installing the necessary CLI tools and configuring authentication without requiring long-lived credentials.
+This reusable workflow sets up a complete Ansible environment with cloud provider authentication using OIDC and executes your specified Ansible playbook. It supports AWS, Azure, and GCP, automatically installing the necessary CLI tools and configuring authentication without requiring long-lived credentials.
 
 **Key Features:**
 - Multi-cloud OIDC authentication (AWS, Azure, GCP)
 - Automatic installation of cloud CLI tools when missing
 - Python and Ansible setup with configurable versions
+- Ansible playbook execution with custom extra variables
 - Input validation and debugging output
 - Flexible checkout with release tag support
 
@@ -26,6 +27,8 @@ This reusable workflow sets up a complete Ansible environment with cloud provide
 | `cloud-provider` | Target cloud provider (aws, gcp, azure) | Yes | — |
 | `release-tag` | Git release tag to check out. If omitted, the latest commit on the default branch is used. | No | `""` |
 | `python-version` | Python version for installing ansible | No | `"3.12"` |
+| `ansible-extra-vars` | Extra variables to pass to the Ansible playbook | No | — |
+| `ansible-playbook-path` | Path to the Ansible playbook file | Yes | — |
 | `aws-region` | AWS region for authentication. Required when cloud-provider is 'aws'. | No | — |
 | `azure-audience` | OIDC audience for Azure token exchange | No | `"api://AzureADTokenExchange"` |
 
@@ -48,99 +51,89 @@ This reusable workflow sets up a complete Ansible environment with cloud provide
 ### AWS Example
 
 ```yaml
-name: Deploy with Ansible to AWS
+name: Run Ansible Playbook on AWS
 
 on:
   workflow_dispatch:
+    inputs:
+      message:
+        description: 'Message to pass to playbook'
+        required: false
+        default: 'Hello from GitHub Actions!'
 
 jobs:
-  bootstrap-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Bootstrap Ansible with AWS OIDC
-        uses: subhamay-bhattacharyya-gha/bootstrap-ansible-wf/.github/workflows/ansible-bootstrap-oidc.yaml@main
-        with:
-          cloud-provider: "aws"
-          aws-region: "us-west-2"
-          python-version: "3.11"
-        secrets:
-          aws-role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-      
-      - name: Run Ansible Playbook
-        run: |
-          ansible-playbook deploy.yml \
-            --extra-vars "environment=production"
+  run-ansible:
+    uses: subhamay-bhattacharyya-gha/run-ansible-playbook-wf/.github/workflows/run-ansible-playbook.yaml@main
+    with:
+      cloud-provider: "aws"
+      aws-region: "us-west-2"
+      python-version: "3.11"
+      ansible-playbook-path: "deploy.yml"
+      ansible-extra-vars: "message=${{ github.event.inputs.message || 'Hello from push event!' }}"
+    secrets:
+      aws-role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 ```
 
 ### Azure Example
 
 ```yaml
-name: Deploy with Ansible to Azure
+name: Run Ansible Playbook on Azure
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
 
 jobs:
-  bootstrap-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Bootstrap Ansible with Azure OIDC
-        uses: subhamay-bhattacharyya-gha/bootstrap-ansible-wf/.github/workflows/ansible-bootstrap-oidc.yaml@main
-        with:
-          cloud-provider: "azure"
-        secrets:
-          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-      
-      - name: Run Ansible Playbook
-        run: |
-          ansible-playbook deploy.yml \
-            --extra-vars "environment=production"
+  run-ansible:
+    uses: subhamay-bhattacharyya-gha/run-ansible-playbook-wf/.github/workflows/run-ansible-playbook.yaml@main
+    with:
+      cloud-provider: "azure"
+      ansible-playbook-path: "azure-deploy.yml"
+      ansible-extra-vars: "environment=${{ github.event.inputs.environment }}"
+    secrets:
+      azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+      azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+      azure-subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 ```
 
 ### GCP Example
 
 ```yaml
-name: Deploy with Ansible to GCP
+name: Run Ansible Playbook on GCP
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [main]
 
 jobs:
-  bootstrap-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Bootstrap Ansible with GCP OIDC
-        uses: subhamay-bhattacharyya-gha/bootstrap-ansible-wf/.github/workflows/ansible-bootstrap-oidc.yaml@main
-        with:
-          cloud-provider: "gcp"
-          release-tag: "v1.0.0"
-        secrets:
-          gcp-wif-provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          gcp-service-account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
-      
-      - name: Run Ansible Playbook
-        run: |
-          ansible-playbook deploy.yml \
-            --extra-vars "environment=production"
+  run-ansible:
+    uses: subhamay-bhattacharyya-gha/run-ansible-playbook-wf/.github/workflows/run-ansible-playbook.yaml@main
+    with:
+      cloud-provider: "gcp"
+      release-tag: "v1.0.0"
+      ansible-playbook-path: "gcp-infrastructure.yml"
+      ansible-extra-vars: "project_id=my-gcp-project region=us-central1"
+    secrets:
+      gcp-wif-provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      gcp-service-account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 ```
 
 ## What This Workflow Does
 
 1. **Input Validation**: Validates the cloud provider and prints all inputs for debugging
-2. **Repository Checkout**: Checks out the specified release tag or latest commit
-3. **Python Setup**: Installs the specified Python version
-4. **Ansible Installation**: Installs Ansible via pip
-5. **Cloud CLI Installation**: Automatically installs AWS CLI or Azure CLI if missing
-6. **OIDC Authentication**: Configures cloud provider authentication using OIDC tokens
-7. **Environment Preparation**: Sets up environment variables for subsequent Ansible execution
+2. **Playbook Validation**: Validates that the specified Ansible playbook file exists
+3. **Repository Checkout**: Checks out the specified release tag or latest commit
+4. **Python Setup**: Installs the specified Python version
+5. **Ansible Installation**: Installs Ansible via pip
+6. **Cloud CLI Installation**: Automatically installs AWS CLI or Azure CLI if missing
+7. **OIDC Authentication**: Configures cloud provider authentication using OIDC tokens
+8. **Ansible Playbook Execution**: Runs the specified playbook with custom extra variables
 
-After this workflow completes, your job environment will have:
-- Ansible installed and ready to use
-- Cloud provider CLI tools installed
-- Authentication configured via OIDC
-- Environment variables set for cloud provider access
+The workflow provides a complete end-to-end solution for running Ansible playbooks with cloud authentication, eliminating the need for manual setup steps or long-lived credentials.
 
 ## License
 

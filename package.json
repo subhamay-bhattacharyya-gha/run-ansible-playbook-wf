@@ -1,5 +1,5 @@
 {
-  "name": "bootstrap-ansible-wf",
+  "name": "run-ansible-playbook-wf",
   "version": "0.0.0",
   "description": "A sample project using semantic release with custom plugins.",
   "main": "index.js",
@@ -26,13 +26,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/subhamay-bhattacharyya-gha/bootstrap-ansible-wf.git"
+    "url": "git+https://github.com/subhamay-bhattacharyya-gha/run-ansible-playbook-wf.git"
   },
   "author": "Subhamay Bhattacharyya",
   "license": "MIT",
   "keywords": [],
   "bugs": {
-    "url": "https://github.com/subhamay-bhattacharyya-gha/bootstrap-ansible-wf/issues"
+    "url": "https://github.com/subhamay-bhattacharyya-gha/run-ansible-playbook-wf/issues"
   },
-  "homepage": "https://github.com/subhamay-bhattacharyya-gha/bootstrap-ansible-wf#readme"
+  "homepage": "https://github.com/subhamay-bhattacharyya-gha/run-ansible-playbook-wf#readme"
 }
