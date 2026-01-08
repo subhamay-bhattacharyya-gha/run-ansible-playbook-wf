@@ -226,5 +226,9 @@ jobs:
       # -------------------------
       - name: Run playbook
         run: |
-          ansible-playbook ${{ inputs.ansible-playbook-path }} \
-            --extra-vars "message=${{ inputs.ansible-extra-vars || 'Hello from push event!' }}"
+          if [[ -n "${{ inputs.ansible-extra-vars }}" ]]; then
+            ansible-playbook ${{ inputs.ansible-playbook-path }} \
+              --extra-vars "${{ inputs.ansible-extra-vars }}"
+          else
+            ansible-playbook ${{ inputs.ansible-playbook-path }}
+          fi

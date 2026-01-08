@@ -27,7 +27,7 @@ This reusable workflow sets up a complete Ansible environment with cloud provide
 | `cloud-provider` | Target cloud provider (aws, gcp, azure) | Yes | — |
 | `release-tag` | Git release tag to check out. If omitted, the latest commit on the default branch is used. | No | `""` |
 | `python-version` | Python version for installing ansible | No | `"3.12"` |
-| `ansible-extra-vars` | Extra variables to pass to the Ansible playbook | No | — |
+| `ansible-extra-vars` | Extra variables to pass to the Ansible playbook (e.g., "var1=value1 var2=value2" or JSON format) | No | — |
 | `ansible-playbook-path` | Path to the Ansible playbook file | Yes | — |
 | `aws-region` | AWS region for authentication. Required when cloud-provider is 'aws'. | No | — |
 
@@ -67,7 +67,7 @@ jobs:
       aws-region: "us-west-2"
       python-version: "3.11"
       ansible-playbook-path: "deploy.yml"
-      ansible-extra-vars: "message=${{ github.event.inputs.message || 'Hello from push event!' }}"
+      ansible-extra-vars: "message='${{ github.event.inputs.message || 'Hello from push event!' }}' environment=production"
     secrets:
       aws-role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
 ```
@@ -91,7 +91,7 @@ jobs:
     with:
       cloud-provider: "azure"
       ansible-playbook-path: "azure-deploy.yml"
-      ansible-extra-vars: "environment=${{ github.event.inputs.environment }}"
+      ansible-extra-vars: "environment=${{ github.event.inputs.environment }} region=eastus"
     secrets:
       azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
       azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
