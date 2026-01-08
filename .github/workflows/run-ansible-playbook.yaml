@@ -225,6 +225,7 @@ jobs:
       # Run Ansible Playbook
       # -------------------------
       - name: Run playbook
+        id: ansible-execution
         run: |
           echo "=========================================="
           echo "Starting Ansible Playbook Execution"
@@ -233,26 +234,76 @@ jobs:
           echo "Extra Variables: ${{ inputs.ansible-extra-vars }}"
           echo "=========================================="
           
+          # Create temporary files to capture output
+          OUTPUT_FILE=$(mktemp)
+          ERROR_FILE=$(mktemp)
+          
           if [ -n "${{ inputs.ansible-extra-vars }}" ]; then
             echo "Running with extra variables..."
             ansible-playbook "${{ inputs.ansible-playbook-path }}" \
               --extra-vars '${{ inputs.ansible-extra-vars }}' \
-              -v
+              -v > "$OUTPUT_FILE" 2> "$ERROR_FILE"
           else
             echo "Running without extra variables..."
             ansible-playbook "${{ inputs.ansible-playbook-path }}" \
-              -v
+              -v > "$OUTPUT_FILE" 2> "$ERROR_FILE"
           fi
           
           ANSIBLE_EXIT_CODE=$?
+          
+          # Display the output
+          echo "=========================================="
+          echo "Ansible Playbook Output:"
+          echo "=========================================="
+          cat "$OUTPUT_FILE"
+          
+          if [ -s "$ERROR_FILE" ]; then
+            echo "=========================================="
+            echo "Ansible Playbook Errors:"
+            echo "=========================================="
+            cat "$ERROR_FILE"
+          fi
+          
           echo "=========================================="
           echo "Ansible Playbook Execution Complete"
           echo "Exit Code: $ANSIBLE_EXIT_CODE"
           echo "=========================================="
           
+          # Set step outputs
+          {
+            echo "stdout<<EOF"
+            cat "$OUTPUT_FILE"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          {
+            echo "stderr<<EOF"
+            cat "$ERROR_FILE"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          echo "exit_code=$ANSIBLE_EXIT_CODE" >> $GITHUB_OUTPUT
+          
           if [ $ANSIBLE_EXIT_CODE -eq 0 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
             echo "✅ Playbook executed successfully!"
           else
+            echo "status=failed" >> $GITHUB_OUTPUT
             echo "❌ Playbook execution failed!"
-            exit $ANSIBLE_EXIT_CODE
           fi
+          
+          # Clean up temporary files
+          rm -f "$OUTPUT_FILE" "$ERROR_FILE"
+          
+          # Exit with the original code
+          exit $ANSIBLE_EXIT_CODE
+
+      - name: Display Ansible Results
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "Ansible Execution Summary"
+          echo "=========================================="
+          echo "Status: ${{ steps.ansible-execution.outputs.status }}"
+          echo "Exit Code: ${{ steps.ansible-execution.outputs.exit_code }}"
+          echo "=========================================="
