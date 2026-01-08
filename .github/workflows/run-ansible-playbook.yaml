@@ -30,11 +30,6 @@ on:
         description: "AWS region for authentication. Required when cloud-provider is 'aws'."
         required: false
         type: string
-      azure-audience:
-        description: "OIDC audience for Azure token exchange"
-        required: false
-        type: string
-        default: "api://AzureADTokenExchange"
     secrets:
       # AWS Authentication Secret
       aws-role-to-assume:
@@ -74,7 +69,6 @@ jobs:
           echo "Ansible Extra Vars: ${{ inputs.ansible-extra-vars }}"
           echo "Ansible Playbook Path: ${{ inputs.ansible-playbook-path }}"
           echo "AWS Region: ${{ inputs.aws-region }}"
-          echo "Azure Audience: ${{ inputs.azure-audience }}"
           echo "AWS Role to Assume: ${{ secrets.aws-role-to-assume && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "GCP WIF Provider: ${{ secrets.gcp-wif-provider && '[PROVIDED]' || '[NOT PROVIDED]' }}"
           echo "GCP Service Account: ${{ secrets.gcp-service-account && '[PROVIDED]' || '[NOT PROVIDED]' }}"
@@ -180,7 +174,7 @@ jobs:
           set -euo pipefail
           TOKEN="$(curl -sSL \
             -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${{ inputs.azure-audience }}" | \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=api://AzureADTokenExchange" | \
             python -c "import sys, json; print(json.load(sys.stdin)['value'])")"
           echo "AZURE_FEDERATED_TOKEN=$TOKEN" >> "$GITHUB_ENV"
 

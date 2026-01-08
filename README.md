@@ -30,7 +30,6 @@ This reusable workflow sets up a complete Ansible environment with cloud provide
 | `ansible-extra-vars` | Extra variables to pass to the Ansible playbook | No | — |
 | `ansible-playbook-path` | Path to the Ansible playbook file | Yes | — |
 | `aws-region` | AWS region for authentication. Required when cloud-provider is 'aws'. | No | — |
-| `azure-audience` | OIDC audience for Azure token exchange | No | `"api://AzureADTokenExchange"` |
 
 ## Secrets
 
