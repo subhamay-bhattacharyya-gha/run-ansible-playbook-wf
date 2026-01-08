@@ -368,42 +368,46 @@ jobs:
               # Validate JSON syntax
               if python3 -m json.tool "$EXTRA_VARS_FILE" > /dev/null 2>&1; then
                 echo "✅ JSON syntax is valid"
+                echo "Contents of extra vars file:"
+                cat "$EXTRA_VARS_FILE"
+                echo ""
                 echo "Running playbook with JSON extra variables..."
+                
+                # Run ansible-playbook and capture output in real-time
+                set +e  # Don't exit on error
                 ansible-playbook "${{ inputs.ansible-playbook-path }}" \
                   --extra-vars "@$EXTRA_VARS_FILE" \
-                  -v > "$OUTPUT_FILE" 2> "$ERROR_FILE"
+                  -v 2>&1 | tee "$OUTPUT_FILE"
+                ANSIBLE_EXIT_CODE=${PIPESTATUS[0]}
+                set -e  # Re-enable exit on error
+                
               else
                 echo "❌ Invalid JSON syntax in extra variables"
                 echo "JSON validation failed. Please check your JSON format."
-                cat "$ERROR_FILE" 2>/dev/null || echo "No additional error details available"
+                python3 -m json.tool "$EXTRA_VARS_FILE" 2>&1 || true
                 exit 1
               fi
             else
               echo "Detected key=value or YAML format for extra variables"
               echo "Running playbook with string extra variables..."
+              
+              # Run ansible-playbook and capture output in real-time
+              set +e  # Don't exit on error
               ansible-playbook "${{ inputs.ansible-playbook-path }}" \
                 --extra-vars "$EXTRA_VARS" \
-                -v > "$OUTPUT_FILE" 2> "$ERROR_FILE"
+                -v 2>&1 | tee "$OUTPUT_FILE"
+              ANSIBLE_EXIT_CODE=${PIPESTATUS[0]}
+              set -e  # Re-enable exit on error
             fi
           else
             echo "Running without extra variables..."
+            
+            # Run ansible-playbook and capture output in real-time
+            set +e  # Don't exit on error
             ansible-playbook "${{ inputs.ansible-playbook-path }}" \
-              -v > "$OUTPUT_FILE" 2> "$ERROR_FILE"
-          fi
-          
-          ANSIBLE_EXIT_CODE=$?
-          
-          # Display the output
-          echo "=========================================="
-          echo "Ansible Playbook Output:"
-          echo "=========================================="
-          cat "$OUTPUT_FILE"
-          
-          if [ -s "$ERROR_FILE" ]; then
-            echo "=========================================="
-            echo "Ansible Playbook Errors:"
-            echo "=========================================="
-            cat "$ERROR_FILE"
+              -v 2>&1 | tee "$OUTPUT_FILE"
+            ANSIBLE_EXIT_CODE=${PIPESTATUS[0]}
+            set -e  # Re-enable exit on error
           fi
           
           echo "=========================================="
@@ -420,7 +424,12 @@ jobs:
           
           {
             echo "stderr<<EOF"
-            cat "$ERROR_FILE"
+            # Since we're using tee, errors are also in OUTPUT_FILE
+            if [ $ANSIBLE_EXIT_CODE -ne 0 ]; then
+              echo "Ansible execution failed with exit code $ANSIBLE_EXIT_CODE"
+              echo "Full output:"
+              cat "$OUTPUT_FILE"
+            fi
             echo "EOF"
           } >> $GITHUB_OUTPUT
           
@@ -432,6 +441,7 @@ jobs:
           else
             echo "status=failed" >> $GITHUB_OUTPUT
             echo "❌ Playbook execution failed!"
+            echo "Full output was displayed above."
           fi
           
           # Clean up temporary files
