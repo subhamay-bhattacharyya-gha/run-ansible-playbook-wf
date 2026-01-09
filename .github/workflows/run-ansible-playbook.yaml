@@ -58,7 +58,7 @@ permissions:
   contents: read
 
 jobs:
-  run:
+  run-playbook:
     runs-on: ubuntu-latest
     steps:
       - name: Set Execution Timestamp
@@ -250,8 +250,8 @@ jobs:
           ## 📋 Ansible Extra Variables Summary
           
           ### 🔧 Deployment Configuration
-          | Category | Key | Value |
-          |----------|-----|-------|
+          | Key | Value |
+          |-----|-------|
           EOF
             
             # Parse and display deployment variables using a different approach
@@ -269,11 +269,11 @@ jobs:
                       # Handle nested objects
                       for nested_key, nested_value in value.items():
                           display_value = str(nested_value) if nested_value != '' else '*Not specified*'
-                          print(f'| {key.title()} | \`{nested_key}\` | {display_value} |')
+                          print(f'| \`{nested_key}\` | {display_value} |')
                   else:
                       # Handle flat key-value pairs
                       display_value = str(value) if value != '' else '*Not specified*'
-                      print(f'| Variables | \`{key}\` | {display_value} |')
+                      print(f'| \`{key}\` | {display_value} |')
           
           print_all_vars(data)
           " >> $GITHUB_STEP_SUMMARY
