@@ -263,20 +263,19 @@ jobs:
           with open('$EXTRA_VARS_FILE', 'r') as f:
               data = json.load(f)
           
-          def print_nested_vars(obj, prefix='', category=''):
+          def print_all_vars(obj):
               for key, value in obj.items():
-                  # Only process 'deployment' and 'aws' keys
-                  if key.lower() in ['deployment', 'aws']:
-                      if isinstance(value, dict):
-                          print_nested_vars(value, f'{prefix}{key}.', key.title())
-                      else:
-                          display_key = f'{prefix}{key}' if prefix else key
-                          display_category = category if category else key.title()
-                          # Handle empty values
-                          display_value = str(value) if value != '' else '*Not specified*'
-                          print(f'| {display_category} | \`{display_key}\` | {display_value} |')
+                  if isinstance(value, dict):
+                      # Handle nested objects
+                      for nested_key, nested_value in value.items():
+                          display_value = str(nested_value) if nested_value != '' else '*Not specified*'
+                          print(f'| {key.title()} | \`{nested_key}\` | {display_value} |')
+                  else:
+                      # Handle flat key-value pairs
+                      display_value = str(value) if value != '' else '*Not specified*'
+                      print(f'| Variables | \`{key}\` | {display_value} |')
           
-          print_nested_vars(data)
+          print_all_vars(data)
           " >> $GITHUB_STEP_SUMMARY
             
             cat >> $GITHUB_STEP_SUMMARY << 'EOF'
@@ -296,14 +295,12 @@ jobs:
           
           def print_vars(obj, indent=0):
               for key, value in obj.items():
-                  # Only process 'deployment' and 'aws' keys for console output
-                  if key.lower() in ['deployment', 'aws']:
-                      if isinstance(value, dict):
-                          print('  ' * indent + f'📁 {key}:')
-                          print_vars(value, indent + 1)
-                      else:
-                          display_value = str(value) if value != '' else '⚠️  Not specified'
-                          print('  ' * indent + f'🔹 {key}: {display_value}')
+                  if isinstance(value, dict):
+                      print('  ' * indent + f'📁 {key}:')
+                      print_vars(value, indent + 1)
+                  else:
+                      display_value = str(value) if value != '' else '⚠️  Not specified'
+                      print('  ' * indent + f'🔹 {key}: {display_value}')
           
           print_vars(data)
           "
