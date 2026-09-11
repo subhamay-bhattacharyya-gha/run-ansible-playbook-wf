@@ -152,7 +152,7 @@ jobs:
       # -------------------------
       - name: AWS | Configure credentials via OIDC
         if: ${{ inputs.cloud-provider == 'aws' }}
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.aws-role-to-assume }}
           aws-region: ${{ inputs.aws-region }}
